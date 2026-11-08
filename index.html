@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ປິ້ນໃບສະໝັກ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f9; --panel:#ffffff; --ink:#1f2a37; --muted:#6b7686; --line:#dde3ec;
+  --accent:#3b5b8c; --accent-soft:#e8eef7; --accent-ink:#ffffff; --danger:#b3261e;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#14181f;--panel:#1c222c;--ink:#e6ebf2;--muted:#93a0b2;--line:#2c3544;--accent:#7f9fd0;--accent-soft:#232d3d;--accent-ink:#0f1722;--danger:#f2b8b5}
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Phetsarath OT","Phetsarath","Times New Roman","Noto Sans Lao",serif;font-size:14px}
+.app{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar+.bar{margin-top:10px}
+button,.btn{font:inherit;border:1px solid var(--accent);background:var(--panel);color:var(--accent);font-weight:600;white-space:nowrap;
+  padding:8px 14px;border-radius:8px;cursor:pointer}
+button:hover,.btn:hover{background:var(--accent-soft)}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accent-ink)}
+.primary:hover{background:var(--accent);opacity:.9}
+.danger{border-color:var(--danger);color:var(--danger)}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{border-radius:8px}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+input[type=text]{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg);color:var(--ink);flex:1;min-width:160px}
+.tbl{overflow:auto;max-height:55vh;border:1px solid var(--line);border-radius:8px}
+table.list{border-collapse:collapse;width:100%}
+.list th,.list td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.list th{position:sticky;top:0;background:var(--accent-soft)}
+.list tr.sel td{background:var(--accent-soft)}
+.list tbody tr{cursor:pointer}
+.count{color:var(--muted);margin-left:auto}
+.empty{color:var(--muted);text-align:center;padding:24px}
+#msg{min-height:20px;margin:0 0 12px;color:var(--muted)}
+#msg.err{color:var(--danger)}
+dialog{max-width:640px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog table{width:100%;border-collapse:collapse}
+dialog td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-word}
+dialog td:first-child{font-weight:600;width:45%}
+.dlg-body{max-height:65vh;overflow:auto;margin:12px 0}
+
+/* ===== ໃບຟອມສຳລັບພິມ (A4 × 2 ໜ້າ ຕໍ່ຄົນ) ===== */
+#sheets{display:none}
+.pg{background:#fff;color:#1b2430;width:210mm;height:297mm;padding:12mm 14mm;overflow:hidden;font-size:var(--fs,14pt);line-height:1.4;
+  font-family:"Phetsarath OT","Phetsarath","Times New Roman","Noto Sans Lao",serif;break-after:page;page-break-after:always}
+.pg h2{margin:0 0 12px;font-size:calc(var(--fs,14pt) + 4pt);color:#1f3f8f;font-weight:700;text-align:center}
+.ft{width:100%;border-collapse:collapse;table-layout:fixed}
+.ft td{border:1px solid #d9dde4;padding:var(--pad,8px) 12px;vertical-align:top;word-break:break-word}
+.ft td.l{font-weight:700}
+.ft td.a{color:#2b3442}
+.ft tr.sec td{background:#e8eef7;color:#1f3f8f;font-weight:700}
+.ft tr{break-inside:avoid;page-break-inside:avoid}
+.sig{margin-top:4px;height:13mm;border-bottom:1px dotted #555;font-size:.8em;color:#6b7686;font-weight:400}
+#sheets.measure{display:block;position:absolute;left:-10000px;top:0;visibility:hidden}
+
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .app>*:not(#sheets){display:none!important}
+  .app{padding:0;max-width:none}
+  #sheets{display:block!important}
+  .pg{margin:0}
+  .doc:last-child .pg:last-child{break-after:auto;page-break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>ປິ້ນໃບສະໝັກ ແລະ ບັນທຶກເຂົ້າລະບົບ</h1>
+  <p class="sub">ອັບໂຫຼດ CSV → ຕິກເລືອກແຖວ → ບັນທຶກເຂົ້າລະບົບ ຫຼື ປິ້ນ (Save as PDF)</p>
+
+  <div class="tabs">
+    <button id="tabCsv" class="on">ນຳເຂົ້າ CSV</button>
+    <button id="tabHist">ປະຫວັດການບັນທຶກ</button>
+  </div>
+  <p id="msg" role="status"></p>
+
+  <!-- ===== ແທັບ 1: CSV ===== -->
+  <section id="viewCsv">
+    <div class="card">
+      <div class="bar">
+        <label class="btn primary" for="file">ເລືອກໄຟລ໌ CSV</label>
+        <input id="file" type="file" accept=".csv,text/csv" hidden>
+        <input id="q" type="text" placeholder="ຄົ້ນຫາ ຊື່ / ເບີໂທ…">
+      </div>
+      <div class="bar">
+        <button id="all">ເລືອກທັງໝົດ</button>
+        <button id="none">ຍົກເລີກທັງໝົດ</button>
+        <button id="save" class="primary">ບັນທຶກເຂົ້າລະບົບ</button>
+        <button id="go">ປິ້ນ / PDF</button>
+        <span class="count" id="cnt">ເລືອກ 0 / 0</span>
+      </div>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="tbl">
+        <table class="list" id="tbl"><thead></thead><tbody></tbody></table>
+        <div class="empty" id="empty">ຍັງບໍ່ມີຂໍ້ມູນ — ກະລຸນາເລືອກໄຟລ໌ CSV</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ແທັບ 2: ປະຫວັດ ===== -->
+  <section id="viewHist" hidden>
+    <div class="card">
+      <div class="bar">
+        <input id="hq" type="text" placeholder="ຄົ້ນຫາ ຊື່ / ເບີໂທ / ແຂວງ…">
+        <button id="hRefresh">ໂຫຼດໃໝ່</button>
+      </div>
+      <div class="bar">
+        <button id="hAll">ເລືອກທັງໝົດ</button>
+        <button id="hNone">ຍົກເລີກທັງໝົດ</button>
+        <button id="hPrint" class="primary">ປິ້ນໃໝ່</button>
+        <button id="hCsv">ດາວໂຫຼດ CSV</button>
+        <button id="hJson">ດາວໂຫຼດ JSON</button>
+        <button id="hDel" class="danger">ລົບ</button>
+        <span class="count" id="hCnt">ເລືອກ 0 / 0</span>
+      </div>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="tbl">
+        <table class="list" id="htbl"><thead></thead><tbody></tbody></table>
+        <div class="empty" id="hEmpty" hidden>ຍັງບໍ່ມີລາຍການທີ່ບັນທຶກ</div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="dlg">
+    <strong id="dlgTitle"></strong>
+    <div class="dlg-body"><table id="dlgTbl"></table></div>
+    <div class="bar"><button id="dlgPrint" class="primary">ປິ້ນ</button><button id="dlgClose">ປິດ</button></div>
+  </dialog>
+
+  <div id="sheets"></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let headers = [], rows = [], picked = new Set();
+let saved = [], hPicked = new Set(), viewId = null;
+let iName = -1, iSur = -1, iPhone = -1;
+
+/* ---------- ຕົວຊ່ວຍ ---------- */
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const clean = (s) => String(s || '').replace(/\u00a0/g, ' ').trim();
+const colIdx = (p) => headers.findIndex((h) => clean(h).startsWith(p));
+const say = (t, err) => { $('msg').textContent = t || ''; $('msg').className = err ? 'err' : ''; };
+const hit = (hay, kw) => !kw || hay.toLowerCase().includes(kw);
+
+/* ---------- ອ່ານ CSV (ຮອງຮັບ "...", ຫຼາຍແຖວ) ---------- */
+function parseCSV(t) {
+  t = t.replace(/^\uFEFF/, '');
+  const out = []; let row = [], f = '', q = false;
+  const push = () => { row.push(f); f = ''; if (row.some((x) => x !== '')) out.push(row); row = []; };
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; push(); }
+    else f += c;
+  }
+  if (f !== '' || row.length) push();
+  return out;
+}
+
+function load(text) {
+  const d = parseCSV(text);
+  if (d.length < 2) { say('ບໍ່ພົບຂໍ້ມູນໃນໄຟລ໌', true); return; }
+  headers = d[0].map(clean); rows = d.slice(1); picked = new Set();
+  iName = colIdx('(1)'); iSur = colIdx('(2)'); iPhone = colIdx('ເບີໂທລະສັບ 020');
+  say(''); renderList();
+}
+const nameOf = (r) => (clean(r[iName]) + ' ' + clean(r[iSur])).trim() || '(ບໍ່ມີຊື່)';
+const phoneOf = (r) => clean(r[iPhone]) || clean(r[5]);
+/* ແປງແຖວ CSV → ຮູບແບບທີ່ເກັບໃນຖານຂໍ້ມູນ (ຮັກສາລຳດັບຄໍລຳຄົບ) */
+const fieldsOf = (r) => headers.map((h, i) => [h, clean(r[i])]);
+const recordOf = (r) => ({
+  name: nameOf(r), gender: clean(r[4]), phone: phoneOf(r),
+  province: clean(r[14]), submitted_at: clean(r[0]).slice(0, 10), fields: fieldsOf(r),
+});
+
+/* ---------- ຕາຕະລາງ CSV ---------- */
+function syncHead(tbl, nSel, nTr) {
+  const hc = tbl.querySelector('.hchk');
+  if (hc) { hc.checked = nTr > 0 && nSel === nTr; hc.indeterminate = nSel > 0 && nSel < nTr; }
+}
+function renderList() {
+  const kw = $('q').value.trim().toLowerCase();
+  $('tbl').querySelector('thead').innerHTML =
+    '<tr><th><input type="checkbox" class="hchk" title="ເລືອກທັງໝົດ"></th><th>#</th><th>ວັນທີສົ່ງ</th><th>ຊື່-ນາມສະກຸນ</th><th>ເພດ</th><th>ເບີໂທ</th><th>ແຂວງ</th></tr>';
+  let b = '', nTr = 0, nSel = 0;
+  rows.forEach((r, i) => {
+    if (!hit(nameOf(r) + ' ' + r.join(' '), kw)) return;
+    const on = picked.has(i); nTr++; if (on) nSel++;
+    b += `<tr class="${on ? 'sel' : ''}" data-i="${i}"><td><input type="checkbox" ${on ? 'checked' : ''}></td><td>${i + 1}</td><td>${esc(clean(r[0]).slice(0, 10))}</td><td>${esc(nameOf(r))}</td><td>${esc(clean(r[4]))}</td><td>${esc(phoneOf(r))}</td><td>${esc(clean(r[14]))}</td></tr>`;
+  });
+  $('tbl').querySelector('tbody').innerHTML = b;
+  $('empty').style.display = rows.length ? 'none' : 'block';
+  syncHead($('tbl'), nSel, nTr);
+  $('cnt').textContent = `ເລືອກ ${picked.size} / ${rows.length}`;
+}
+const visibleCsv = () => {
+  const kw = $('q').value.trim().toLowerCase();
+  return rows.map((r, i) => i).filter((i) => hit(nameOf(rows[i]) + ' ' + rows[i].join(' '), kw));
+};
+
+/* ---------- API ---------- */
+function savedPw() { try { return sessionStorage.getItem('pw') || ''; } catch (e) { return ''; } }
+async function api(method, qs, body, retried) {
+  const r = await fetch('/api/records' + (qs || ''), {
+    method,
+    headers: { 'Content-Type': 'application/json', 'x-app-password': savedPw() },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) {  // ເຊີບເວີເປີດໃຊ້ລະຫັດຜ່ານ (ທາງເລືອກ) — ຖາມເມື່ອຈຳເປັນເທົ່ານັ້ນ
+    try { sessionStorage.removeItem('pw'); } catch (e) {}
+    if (!retried) {
+      const p = prompt('ໃສ່ລະຫັດຜ່ານ');
+      if (p) { try { sessionStorage.setItem('pw', p); } catch (e) {} return api(method, qs, body, true); }
+    }
+    throw new Error('ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ');
+  }
+  if (r.status === 404) throw new Error('ບໍ່ພົບ API — ກວດສອບວ່າ deploy ໂຟລເດີ api ແລ້ວ');
+  if (!r.ok) throw new Error(j.error || 'ຜິດພາດ ' + r.status);
+  return j;
+}
+const chunk = (a, n = 100) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+const fetchFull = async (ids) => {
+  const out = [];
+  for (const c of chunk(ids)) out.push(...(await api('GET', '?ids=' + c.join(','))).records);
+  return out;
+};
+
+/* ---------- ບັນທຶກເຂົ້າລະບົບ (ສະເພາະທີ່ເລືອກ) ---------- */
+async function saveSel() {
+  if (!picked.size) { say('ກະລຸນາເລືອກຢ່າງໜ້ອຍ 1 ແຖວ', true); return; }
+  const list = [...picked].sort((a, b) => a - b).map((i) => recordOf(rows[i]));
+  say('ກຳລັງບັນທຶກ…');
+  try {
+    let ok = 0, dup = 0;
+    for (let i = 0; i < list.length; i += 200) {
+      const r = await api('POST', '', { records: list.slice(i, i + 200) });
+      ok += r.saved; dup += r.skipped;
+    }
+    say(`ບັນທຶກແລ້ວ ${ok} ລາຍການ` + (dup ? ` (ຂ້າມ ${dup} ລາຍການທີ່ເຄີຍບັນທຶກແລ້ວ)` : ''));
+  } catch (e) { say(e.message, true); }
+}
+
+/* ---------- ປະຫວັດ ---------- */
+async function loadSaved() {
+  say('ກຳລັງໂຫຼດ…');
+  try { saved = (await api('GET')).records; hPicked = new Set(); say(''); renderSaved(); }
+  catch (e) { say(e.message, true); }
+}
+function renderSaved() {
+  const kw = $('hq').value.trim().toLowerCase();
+  $('htbl').querySelector('thead').innerHTML =
+    '<tr><th><input type="checkbox" class="hchk" title="ເລືອກທັງໝົດ"></th><th>ID</th><th>ບັນທຶກເມື່ອ</th><th>ຊື່-ນາມສະກຸນ</th><th>ເພດ</th><th>ເບີໂທ</th><th>ແຂວງ</th><th></th></tr>';
+  let b = '', nTr = 0, nSel = 0;
+  saved.forEach((r) => {
+    if (!hit([r.name, r.phone, r.province].join(' '), kw)) return;
+    const on = hPicked.has(r.id); nTr++; if (on) nSel++;
+    b += `<tr class="${on ? 'sel' : ''}" data-id="${r.id}"><td><input type="checkbox" ${on ? 'checked' : ''}></td><td>${r.id}</td><td>${esc(new Date(r.created_at).toLocaleString('lo-LA'))}</td><td>${esc(r.name)}</td><td>${esc(r.gender)}</td><td>${esc(r.phone)}</td><td>${esc(r.province)}</td><td><button class="view" data-id="${r.id}">ເບິ່ງ</button></td></tr>`;
+  });
+  $('htbl').querySelector('tbody').innerHTML = b;
+  $('hEmpty').hidden = saved.length > 0;
+  syncHead($('htbl'), nSel, nTr);
+  $('hCnt').textContent = `ເລືອກ ${hPicked.size} / ${saved.length}`;
+}
+const needSel = () => { if (!hPicked.size) { say('ກະລຸນາເລືອກຢ່າງໜ້ອຍ 1 ລາຍການ', true); return false; } say(''); return true; };
+
+async function delSel() {
+  if (!needSel()) return;
+  if (!confirm(`ລົບ ${hPicked.size} ລາຍການ? ການລົບບໍ່ສາມາດກູ້ຄືນໄດ້`)) return;
+  try {
+    for (const c of chunk([...hPicked])) await api('DELETE', '?ids=' + c.join(','));
+    await loadSaved(); say('ລົບແລ້ວ');
+  }
+  catch (e) { say(e.message, true); }
+}
+async function printSaved(ids) {
+  try { const recs = await fetchFull(ids); printDocs(recs.map((r) => r.fields)); }
+  catch (e) { say(e.message, true); }
+}
+
+/* ເບິ່ງລາຍລະອຽດ */
+async function openView(id) {
+  try {
+    const [r] = await fetchFull([id]); viewId = id;
+    $('dlgTitle').textContent = `${r.name} (ID ${r.id})`;
+    $('dlgTbl').innerHTML = r.fields.filter((f) => clean(f[0]))
+      .map((f) => `<tr><td>${esc(f[0])}</td><td>${esc(f[1]) || '-'}</td></tr>`).join('');
+    $('dlg').showModal();
+  } catch (e) { say(e.message, true); }
+}
+
+/* ດາວໂຫຼດ */
+function download(name, mime, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const csvCell = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+async function exportSaved(kind) {
+  if (!needSel()) return;
+  try {
+    const recs = await fetchFull([...hPicked]);
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (kind === 'json') { download(`applicants-${stamp}.json`, 'application/json', JSON.stringify(recs, null, 2)); return; }
+    const cols = [];
+    recs.forEach((r) => r.fields.forEach((f) => { if (clean(f[0]) && !cols.includes(f[0])) cols.push(f[0]); }));
+    const lines = [cols.map(csvCell).join(',')];
+    recs.forEach((r) => {
+      const m = new Map(r.fields); lines.push(cols.map((c) => csvCell(m.get(c))).join(','));
+    });
+    download(`applicants-${stamp}.csv`, 'text/csv;charset=utf-8', '\uFEFF' + lines.join('\r\n'));
+  } catch (e) { say(e.message, true); }
+}
+
+/* ---------- ພິມ: 1 ຄົນ = 2 ໜ້າ A4 ---------- */
+const TITLE = '<h2>ແບບຟອມສະໝັກອອນລາຍ ສ.ເກົາຫຼີ</h2>';
+const SEC = { 0: 'ສ່ວນທີ 1: ຂໍ້ມູນສ່ວນຕົວ', 17: 'ສ່ວນທີ 2: ປະຫວັດ ແລະ ຄວາມສາມາດ', 28: 'ສ່ວນທີ 3: ສຸຂະພາບ, ໜີ້ສິນ ແລະ ເງື່ອນໄຂການສະໝັກ' };
+const TABLE = '<table class="ft"><colgroup><col style="width:58%"><col></colgroup><tbody></tbody></table>';
+
+function rowList(f) {
+  const a = [];
+  f.forEach(([label, val], i) => {
+    label = clean(label);
+    if (!label || label === 'อายุ') return;
+    if (f.length >= 40 && SEC[i]) a.push(`<tr class="sec"><td colspan="2">${SEC[i]}</td></tr>`);
+    a.push(`<tr><td class="l">${esc(label)}</td><td class="a">${esc(clean(val))}</td></tr>`);
+  });
+  const iv = f.find((x) => clean(x[0]) === 'อายุ');
+  a.push(`<tr><td class="l">ຜູ້ສຳພາດ</td><td class="a">${esc((iv && clean(iv[1])) || '-')}<div class="sig">ລາຍເຊັນ</div></td></tr>`);
+  return a;
+}
+function fitDocs(list) {
+  const box = $('sheets'); box.className = 'measure'; box.innerHTML = '';
+  list.forEach((f) => {
+    const rl = rowList(f);
+    const doc = document.createElement('div'); doc.className = 'doc';
+    const p1 = document.createElement('section'); p1.className = 'pg'; p1.innerHTML = TITLE + TABLE;
+    const p2 = document.createElement('section'); p2.className = 'pg'; p2.innerHTML = TABLE;
+    doc.append(p1, p2); box.appendChild(doc);
+    const b1 = p1.querySelector('tbody'), b2 = p2.querySelector('tbody');
+    [14, 13.5, 13, 12.5, 12].some((fs) => {
+      doc.style.setProperty('--fs', fs + 'pt');
+      return [9, 8, 7, 6, 5, 4, 3, 2].some((pad) => {
+        doc.style.setProperty('--pad', pad + 'px');
+        b1.innerHTML = rl.join(''); b2.innerHTML = '';
+        while (b1.rows.length > 1 && p1.scrollHeight > p1.clientHeight + 1) b2.insertBefore(b1.rows[b1.rows.length - 1], b2.firstChild);
+        const lr = b1.rows[b1.rows.length - 1];
+        if (lr && lr.className === 'sec') b2.insertBefore(lr, b2.firstChild);
+        return p2.scrollHeight <= p2.clientHeight + 1;
+      });
+    });
+  });
+  box.className = '';
+}
+function printDocs(list) {
+  if ($('dlg').open) $('dlg').close();
+  fitDocs(list);
+  setTimeout(() => window.print(), 150);
+}
+
+/* ---------- ເຫດການ ---------- */
+function showTab(hist) {
+  $('viewCsv').hidden = hist; $('viewHist').hidden = !hist;
+  $('tabCsv').classList.toggle('on', !hist); $('tabHist').classList.toggle('on', hist);
+  say(''); if (hist) loadSaved();
+}
+$('tabCsv').onclick = () => showTab(false);
+$('tabHist').onclick = () => showTab(true);
+
+/* CSV */
+$('file').onchange = (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => load(rd.result); rd.readAsText(f, 'UTF-8');
+};
+$('q').oninput = renderList;
+$('all').onclick = () => { visibleCsv().forEach((i) => picked.add(i)); renderList(); };
+$('none').onclick = () => { picked.clear(); renderList(); };
+$('save').onclick = saveSel;
+$('go').onclick = () => {
+  if (!picked.size) { say('ກະລຸນາເລືອກຢ່າງໜ້ອຍ 1 ແຖວ', true); return; }
+  say(''); printDocs([...picked].sort((a, b) => a - b).map((i) => fieldsOf(rows[i])));
+};
+$('tbl').querySelector('thead').onchange = (e) => {
+  if (!e.target.classList.contains('hchk')) return;
+  visibleCsv().forEach((i) => (e.target.checked ? picked.add(i) : picked.delete(i))); renderList();
+};
+$('tbl').querySelector('tbody').onclick = (e) => {
+  const tr = e.target.closest('tr'); if (!tr) return;
+  const i = +tr.dataset.i; picked.has(i) ? picked.delete(i) : picked.add(i); renderList();
+};
+
+/* ປະຫວັດ */
+const visibleSaved = () => {
+  const kw = $('hq').value.trim().toLowerCase();
+  return saved.filter((r) => hit([r.name, r.phone, r.province].join(' '), kw)).map((r) => r.id);
+};
+$('hq').oninput = renderSaved;
+$('hRefresh').onclick = loadSaved;
+$('hAll').onclick = () => { visibleSaved().forEach((id) => hPicked.add(id)); renderSaved(); };
+$('hNone').onclick = () => { hPicked.clear(); renderSaved(); };
+$('hPrint').onclick = () => { if (needSel()) printSaved([...hPicked]); };
+$('hCsv').onclick = () => exportSaved('csv');
+$('hJson').onclick = () => exportSaved('json');
+$('hDel').onclick = delSel;
+$('htbl').querySelector('thead').onchange = (e) => {
+  if (!e.target.classList.contains('hchk')) return;
+  visibleSaved().forEach((id) => (e.target.checked ? hPicked.add(id) : hPicked.delete(id))); renderSaved();
+};
+$('htbl').querySelector('tbody').onclick = (e) => {
+  const v = e.target.closest('.view');
+  if (v) { openView(+v.dataset.id); return; }
+  const tr = e.target.closest('tr'); if (!tr) return;
+  const id = +tr.dataset.id; hPicked.has(id) ? hPicked.delete(id) : hPicked.add(id); renderSaved();
+};
+$('dlgClose').onclick = () => $('dlg').close();
+$('dlgPrint').onclick = () => printSaved([viewId]);
+</script>
+</body>
+</html>
